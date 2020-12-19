@@ -1,0 +1,54 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+import re
+import argparse
+
+parser = argparse.ArgumentParser( description="Search wikipedia", epilog="By nnsense - 2020")
+parser.add_argument("search", help="Search for this text on wikipedia")
+parser.add_argument("--more", help="Show the whole summary (by default only the first line is shown)", required=False, action="store_true")
+parser.add_argument("--page", help="Show the whole page (by default only the first line is shown)", required=False, action="store_true")
+args = parser.parse_args()
+
+def main():
+
+    if args.search:
+        search_text = args.search
+    else:
+        print("ERROR: no text to search provided")
+        exit()
+
+    result = wikipedia_search(search_text, args.more, args.page)
+
+    print(result)
+
+
+def wikipedia_search(search_text, more, page):
+
+    import wikipedia
+
+    wiki_search = wikipedia.search(search_text, results=1)
+
+    if len (wiki_search) > 0:
+        try:
+            wiki_page = wikipedia.page(wiki_search[0], auto_suggest=True)
+
+            if more:
+                result = wiki_page.title + ": " + wiki_page.summary + "\n" + "(" + wiki_page.url + ")"
+            elif page:
+                result = wiki_page.title + ": " + wiki_page.summary + "\n" + wiki_page.content + "(" + wiki_page.url + ")"
+            else:
+                matches = re.findall(r'[^.]+', wiki_page.summary)
+                result = wiki_page.title + ": " + matches[0] + "." + "\n" + "(" + wiki_page.url + ")"
+
+        except wikipedia.exceptions.DisambiguationError as e:
+            options = '"' + '", "'.join(e.options) + '"'
+            result = "I didn't find an exact match on wikipedia, here are some options: \n" + options
+    else:
+        result = "Sorry I didn't find a match."
+
+    return result
+
+
+
+if __name__ == '__main__': main()
